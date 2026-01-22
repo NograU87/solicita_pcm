@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#667eea">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <title>PCM - Solicitações</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #F5F7FA;
+            min-height: 100vh;
+            padding-bottom: 80px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 3px;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding: 15px;
+            background: white;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 15px 10px;
+            border-radius: 10px;
+            background: #F8F9FA;
+        }
+
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .stat-card .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .stat-card.normal .dot { background: #10B981; }
+        .stat-card.normal .number { color: #10B981; }
+        .stat-card.urgente .dot { background: #F59E0B; }
+        .stat-card.urgente .number { color: #F59E0B; }
+        .stat-card.parado .dot { background: #EF4444; }
+        .stat-card.parado .number { color: #EF4444; }
+
+        .stat-card .label {
+            font-size: 11px;
+            color: #6B7280;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        /* Cards */
+        .cards-container {
+            padding: 15px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            border-left: 4px solid;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .card:active {
+            transform: scale(0.98);
+        }
+
+        .card.normal { border-left-color: #10B981; }
+        .card.urgente { border-left-color: #F59E0B; }
+        .card.parado { border-left-color: #EF4444; }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1F2937;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            color: white;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: white;
+        }
+
+        .badge-normal { background: #10B981; }
+        .badge-urgente { background: #F59E0B; }
+        .badge-parado { background: #EF4444; }
+
+        .card-info {
+            font-size: 13px;
+            color: #6B7280;
+            line-height: 1.6;
+        }
+
+        .card-info strong {
+            color: #374151;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9CA3AF;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* Detail Screen */
+        .detail-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #F5F7FA;
+            z-index: 200;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .detail-screen.active {
+            display: block;
+        }
+
+        .detail-header {
+            background: white;
+            padding: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            color: #667eea;
+            -webkit-appearance: none;
+        }
+
+        .detail-info {
+            background: white;
+            padding: 20px;
+            margin: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .detail-info h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #1F2937;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #F3F4F6;
+            font-size: 14px;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-row label {
+            color: #6B7280;
+        }
+
+        .detail-row span {
+            color: #1F2937;
+            font-weight: 600;
+        }
+
+        /* Items Section */
+        .items-section {
+            margin: 15px;
+            padding-bottom: 30px;
+        }
+
+        .items-section h3 {
+            font-size: 16px;
+            color: #1F2937;
+            margin-bottom: 10px;
+            padding-left: 5px;
+        }
+
+        .item-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .item-card h4 {
+            font-size: 15px;
+            color: #1F2937;
+            flex: 1;
+        }
+
+        .item-card p {
+            font-size: 13px;
+            color: #6B7280;
+            margin-top: 5px;
+        }
+
+        .item-delete {
+            background: none;
+            border: none;
+            color: #EF4444;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0 5px;
+            -webkit-appearance: none;
+        }
+
+        .item-photo {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin-top: 10px;
+            border: 2px solid #E5E7EB;
+            cursor: pointer;
+        }
+
+        /* Bottom Navbar */
+        .bottom-navbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            color: #9CA3AF;
+            padding: 8px;
+            transition: color 0.3s;
+            -webkit-appearance: none;
+            border: none;
+            background: none;
+        }
+
+        .nav-item.active {
+            color: #667eea;
+        }
+
+        .nav-item .icon {
+            font-size: 24px;
+        }
+
+        .nav-item .label {
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: flex-end;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            border-radius: 20px 20px 0 0;
+            padding: 25px;
+            max-height: 85vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            animation: slideUp 0.3s;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            font-size: 18px;
+            color: #1F2937;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #9CA3AF;
+            cursor: pointer;
+            -webkit-appearance: none;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: #6B7280;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #D1D5DB;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            -webkit-appearance: none;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .file-upload-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            border: 2px dashed #D1D5DB;
+            border-radius: 8px;
+            background: #F9FAFB;
+            cursor: pointer;
+            font-size: 14px;
+            color: #6B7280;
+            transition: all 0.3s;
+        }
+
+        .file-upload-btn:hover {
+            border-color: #667eea;
+            background: #F0F4FF;
+            color: #667eea;
+        }
+
+        .file-upload-btn input {
+            display: none;
+        }
+
+        .photo-preview {
+            width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin-top: 10px;
+            border: 2px solid #E5E7EB;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            -webkit-appearance: none;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Fix para Safari iOS */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                padding-bottom: env(safe-area-inset-bottom, 80px);
+            }
+
+            .bottom-navbar {
+                padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Tela Principal - Compras -->
+    <div id="screen-compras" class="screen active">
+        <div class="header">
+            <h1>🛠️ Solicitação de Compras</h1>
+            <p>Manutenção - PCM</p>
+        </div>
+
+        <div class="dashboard">
+            <div class="stat-card normal">
+                <div class="number">
+                    <span class="dot"></span>
+                    <span id="count-normal">0</span>
+                </div>
+                <div class="label">Normal</div>
+            </div>
+            <div class="stat-card urgente">
+                <div class="number">
+                    <span class="dot"></span>
+                    <span id="count-urgente">0</span>
+                </div>
+                <div class="label">Urgente</div>
+            </div>
+            <div class="stat-card parado">
+                <div class="number">
+                    <span class="dot"></span>
+                    <span id="count-parado">0</span>
+                </div>
+                <div class="label">Parado</div>
+            </div>
+        </div>
+
+        <div class="cards-container" id="cards-container"></div>
+    </div>
+
+    <!-- Tela de Ferramentas -->
+    <div id="screen-ferramentas" class="screen">
+        <div class="header">
+            <h1>🔧 Solicitação de Ferramentas</h1>
+            <p>Gestão de Ferramentas</p>
+        </div>
+
+        <div style="padding: 15px;">
+            <button class="btn-primary" onclick="openToolModal()">➕ Nova Solicitação de Ferramenta</button>
+        </div>
+
+        <div class="cards-container" id="tools-container"></div>
+    </div>
+
+    <!-- Tela de Detalhes (Compras) -->
+    <div id="detail-screen" class="detail-screen">
+        <div class="detail-header">
+            <button class="back-btn" onclick="closeDetails()">←</button>
+        </div>
+
+        <div class="detail-info">
+            <h2>Detalhes da Solicitação</h2>
+            <div class="detail-row">
+                <label>Solicitante:</label>
+                <span id="d-solicitante">-</span>
+            </div>
+            <div class="detail-row">
+                <label>Data:</label>
+                <span id="d-data">-</span>
+            </div>
+            <div class="detail-row">
+                <label>Frota:</label>
+                <span id="d-frota">-</span>
+            </div>
+            <div class="detail-row">
+                <label>CR:</label>
+                <span id="d-cr">-</span>
+            </div>
+            <div class="detail-row">
+                <label>Local:</label>
+                <span id="d-local">-</span>
+            </div>
+            <div class="detail-row">
+                <label>Urgência:</label>
+                <span id="d-urgencia">-</span>
+            </div>
+        </div>
+
+        <div style="padding: 0 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+            <button class="btn-primary" style="background: #3B82F6; margin: 0;" onclick="openServiceModal()">🔧 Serviço</button>
+            <button class="btn-primary" style="background: #F59E0B; margin: 0;" onclick="openPartsModal()">🔩 Peças</button>
+            <button class="btn-primary" style="background: #25D366; margin: 0; grid-column: 1 / -1;" onclick="shareWhatsApp()">📲 WhatsApp</button>
+            <button class="btn-primary" style="background: #EF4444; margin: 0; grid-column: 1 / -1;" onclick="deleteCurrentSolicitacao()">🗑️ Excluir</button>
+        </div>
+
+        <div id="services-section" class="items-section hidden">
+            <h3>🔧 Serviços</h3>
+            <div id="services-list"></div>
+        </div>
+
+        <div id="parts-section" class="items-section hidden">
+            <h3>🔩 Peças</h3>
+            <div id="parts-list"></div>
+        </div>
+    </div>
+
+    <!-- Bottom Navbar -->
+    <div class="bottom-navbar">
+        <button class="nav-item active" onclick="switchScreen('compras')">
+            <span class="icon">🛒</span>
+            <span class="label">Compras</span>
+        </button>
+        <button class="nav-item" onclick="switchScreen('ferramentas')">
+            <span class="icon">🔧</span>
+            <span class="label">Ferramentas</span>
+        </button>
+        <button class="nav-item" onclick="openNewSolicitacao()">
+            <span class="icon">➕</span>
+            <span class="label">Nova</span>
+        </button>
+    </div>
+
+    <!-- Modal Nova Solicitação de Compra -->
+    <div id="modal-nova" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>➕ Nova Solicitação</h2>
+                <button class="close-btn" onclick="closeModal('modal-nova')">&times;</button>
+            </div>
+            <form id="form-solicitacao" onsubmit="salvarSolicitacao(event)">
+                <div class="form-group">
+                    <label>👤 Solicitante</label>
+                    <input type="text" id="solicitante" placeholder="Seu nome" required>
+                </div>
+                <div class="form-group">
+                    <label>📅 Data</label>
+                    <input type="date" id="data" required>
+                </div>
+                <div class="form-group">
+                    <label>🚜 Frota</label>
+                    <input type="text" id="frota" placeholder="Ex: Trator 001" required>
+                </div>
+                <div class="form-group">
+                    <label>📋 CR</label>
+                    <input type="text" id="cr" placeholder="Código CR" required>
+                </div>
+                <div class="form-group">
+                    <label>📍 Local</label>
+                    <input type="text" id="local" placeholder="Local da manutenção" required>
+                </div>
+                <div class="form-group">
+                    <label>⚠️ Tipo de Urgência</label>
+                    <select id="urgencia" required>
+                        <option value="">Selecione...</option>
+                        <option value="normal">🟢 Normal</option>
+                        <option value="urgente">🟡 Urgente</option>
+                        <option value="parado">🔴 Parado</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Nova Ferramenta -->
+    <div id="modal-tool" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔧 Nova Ferramenta</h2>
+                <button class="close-btn" onclick="closeModal('modal-tool')">&times;</button>
+            </div>
+            <form id="form-tool" onsubmit="salvarFerramenta(event)">
+                <div class="form-group">
+                    <label>👤 Solicitante</label>
+                    <input type="text" id="tool-solicitante" placeholder="Seu nome" required>
+                </div>
+                <div class="form-group">
+                    <label>🔧 Nome da Ferramenta</label>
+                    <input type="text" id="tool-name" placeholder="Ex: Chave de fenda" required>
+                </div>
+                <div class="form-group">
+                    <label>📝 Descrição</label>
+                    <textarea id="tool-desc" placeholder="Para que será utilizada..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>📸 Foto da Ferramenta (opcional)</label>
+                    <label class="file-upload-btn">
+                        <input type="file" id="tool-photo" accept="image/*" onchange="previewToolPhoto(this)">
+                        📷 Escolher Foto
+                    </label>
+                    <img id="tool-photo-preview" class="photo-preview hidden">
+                </div>
+                <button type="submit" class="btn-primary">Adicionar Ferramenta</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Serviço -->
+    <div id="modal-service" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔧 Novo Serviço</h2>
+                <button class="close-btn" onclick="closeModal('modal-service')">&times;</button>
+            </div>
+            <form id="form-service" onsubmit="salvarServico(event)">
+                <div class="form-group">
+                    <label>Nome do Serviço</label>
+                    <input type="text" id="service-name" placeholder="Ex: Troca de óleo" required>
+                </div>
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <textarea id="service-desc" placeholder="Detalhes do serviço..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Adicionar Serviço</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Peças -->
+    <div id="modal-parts" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔩 Nova Peça</h2>
+                <button class="close-btn" onclick="closeModal('modal-parts')">&times;</button>
+            </div>
+            <form id="form-parts" onsubmit="salvarPeca(event)">
+                <div class="form-group">
+                    <label>Nome da Peça</label>
+                    <input type="text" id="part-name" placeholder="Ex: Filtro de óleo" required>
+                </div>
+                <div class="form-group">
+                    <label>Quantidade</label>
+                    <input type="number" id="part-qty" placeholder="1" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Observações</label>
+                    <textarea id="part-obs" placeholder="Detalhes adicionais..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Adicionar Peça</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        let solicitacoes = JSON.parse(localStorage.getItem('solicitacoes')) || [];
+        let ferramentas = JSON.parse(localStorage.getItem('ferramentas')) || [];
+        let currentId = null;
+        let currentScreen = 'compras';
+
+        function init() {
+            renderCards();
+            updateDashboard();
+            renderTools();
+        }
+
+        // Navegação
+        function switchScreen(screen) {
+            currentScreen = screen;
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            if (screen === 'compras') {
+                document.getElementById('screen-compras').classList.add('active');
+                document.querySelectorAll('.nav-item')[0].classList.add('active');
+            } else if (screen === 'ferramentas') {
+                document.getElementById('screen-ferramentas').classList.add('active');
+                document.querySelectorAll('.nav-item')[1].classList.add('active');
+            }
+        }
+
+        function openNewSolicitacao() {
+            if (currentScreen === 'compras') {
+                openModal('modal-nova');
+            } else if (currentScreen === 'ferramentas') {
+                openToolModal();
+            }
+        }
+
+        // Modals
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            if (modalId === 'modal-nova') {
+                document.getElementById('data').value = new Date().toISOString().split('T')[0];
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            document.querySelectorAll('form').forEach(form => form.reset());
+            document.getElementById('tool-photo-preview').classList.add('hidden');
+        }
+
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal(modal.id);
+                }
+            });
+        });
+
+        // COMPRAS - Nova Solicitação
+        function salvarSolicitacao(e) {
+            e.preventDefault();
+
+            const nova = {
+                id: Date.now(),
+                solicitante: document.getElementById('solicitante').value,
+                data: document.getElementById('data').value,
+                frota: document.getElementById('frota').value,
+                cr: document.getElementById('cr').value,
+                local: document.getElementById('local').value,
+                urgencia: document.getElementById('urgencia').value,
+                servicos: [],
+                pecas: []
+            };
+
+            solicitacoes.unshift(nova);
+            localStorage.setItem('solicitacoes', JSON.stringify(solicitacoes));
+
+            closeModal('modal-nova');
+            renderCards();
+            updateDashboard();
+        }
+
+        // Render Cards
+        function renderCards() {
+            const container = document.getElementById('cards-container');
+
+            if (solicitacoes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        <p>Nenhuma solicitação criada</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = solicitacoes.map(sol => `
+                <div class="card ${sol.urgencia}" onclick="openDetails(${sol.id})">
+                    <div class="card-header">
+                        <div class="card-title">${sol.frota}</div>
+                        <div class="badge badge-${sol.urgencia}">
+                            <span class="dot"></span>
+                            ${sol.urgencia}
+                        </div>
+                    </div>
+                    <div class="card-info">
+                        <div><strong>Solicitante:</strong> ${sol.solicitante}</div>
+                        <div><strong>CR:</strong> ${sol.cr} | <strong>Local:</strong> ${sol.local}</div>
+                        <div><strong>Data:</strong> ${formatDate(sol.data)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Dashboard
+        function updateDashboard() {
+            const normal = solicitacoes.filter(s => s.urgencia === 'normal').length;
+            const urgente = solicitacoes.filter(s => s.urgencia === 'urgente').length;
+            const parado = solicitacoes.filter(s => s.urgencia === 'parado').length;
+
+            document.getElementById('count-normal').textContent = normal;
+            document.getElementById('count-urgente').textContent = urgente;
+            document.getElementById('count-parado').textContent = parado;
+        }
+
+        // Detalhes
+        function openDetails(id) {
+            currentId = id;
+            const sol = solicitacoes.find(s => s.id === id);
+
+            document.getElementById('d-solicitante').textContent = sol.solicitante;
+            document.getElementById('d-data').textContent = formatDate(sol.data);
+            document.getElementById('d-frota').textContent = sol.frota;
+            document.getElementById('d-cr').textContent = sol.cr;
+            document.getElementById('d-local').textContent = sol.local;
+
+            const urgenciaEl = document.getElementById('d-urgencia');
+            const urgenciaIcons = {normal: '🟢', urgente: '🟡', parado: '🔴'};
+            urgenciaEl.innerHTML = `${urgenciaIcons[sol.urgencia]} ${sol.urgencia.toUpperCase()}`;
+
+            renderServices(sol.servicos);
+            renderParts(sol.pecas);
+
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('detail-screen').classList.add('active');
+        }
+
+        function closeDetails() {
+            document.getElementById('detail-screen').classList.remove('active');
+            document.getElementById('screen-compras').classList.add('active');
+            currentId = null;
+        }
+
+        // Serviços
+        function openServiceModal() {
+            openModal('modal-service');
+        }
+
+        function salvarServico(e) {
+            e.preventDefault();
+            const sol = solicitacoes.find(s => s.id === currentId);
+
+            sol.servicos.push({
+                id: Date.now(),
+                nome: document.getElementById('service-name').value,
+                descricao: document.getElementById('service-desc').value
+            });
+
+            localStorage.setItem('solicitacoes', JSON.stringify(solicitacoes));
+            renderServices(sol.servicos);
+            closeModal('modal-service');
+        }
+
+        function renderServices(servicos) {
+            const section = document.getElementById('services-section');
+            const list = document.getElementById('services-list');
+
+            if (servicos.length === 0) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            section.classList.remove('hidden');
+            list.innerHTML = servicos.map(s => `
+                <div class="item-card">
+                    <div class="item-header">
+                        <h4>${s.nome}</h4>
+                        <button class="item-delete" onclick="deleteService(${s.id})">×</button>
+                    </div>
+                    <p>${s.descricao || 'Sem descrição'}</p>
+                </div>
+            `).join('');
+        }
+
+        function deleteService(id) {
+            if (!confirm('Excluir este serviço?')) return;
+            const sol = solicitacoes.find(s => s.id === currentId);
+            sol.servicos = sol.servicos.filter(s => s.id !== id);
+            localStorage.setItem('solicitacoes', JSON.stringify(solicitacoes));
+            renderServices(sol.servicos);
+        }
+
+        // Peças
+        function openPartsModal() {
+            openModal('modal-parts');
+        }
+
+        function salvarPeca(e) {
+            e.preventDefault();
+            const sol = solicitacoes.find(s => s.id === currentId);
+
+            sol.pecas.push({
+                id: Date.now(),
+                nome: document.getElementById('part-name').value,
+                quantidade: document.getElementById('part-qty').value,
+                observacoes: document.getElementById('part-obs').value
+            });
+
+            localStorage.setItem('solicitacoes', JSON.stringify(solicitacoes));
+            renderParts(sol.pecas);
+            closeModal('modal-parts');
+        }
+
+        function renderParts(pecas) {
+            const section = document.getElementById('parts-section');
+            const list = document.getElementById('parts-list');
+
+            if (pecas.length === 0) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            section.classList.remove('hidden');
+            list.innerHTML = pecas.map(p => `
+                <div class="item-card">
+                    <div class="item-header">
+                        <h4>${p.nome}</h4>
+                        <button class="item-delete" onclick="deletePart(${p.id})">×</button>
+                    </div>
+                    <p><strong>Qtd:</strong> ${p.quantidade}</p>
+                    ${p.observacoes ? `<p>${p.observacoes}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function deletePart(id) {
+            if (!confirm('Excluir esta peça?')) return;
+            const sol = solicitacoes.find(s => s.id === currentId);
+            sol.pecas = sol.pecas.filter(p => p.id !== id);
+            localStorage.setItem('solicitacoes', JSON.stringify(solicitacoes));
+            renderParts(sol.pecas);
+        }
+
+        function deleteCurrentSolicitacao() {
+            if (!confirm('Excluir esta solicitação completa?')) return;
+            solicitacoes = solicitacoes.filter(s => s.id !== currentId);
+            localStorage.setItem('solicitacoes', JSON.stringify(solicitacoes));
+            closeDetails();
+            renderCards();
+            updateDashboard();
+        }
+
+        // WhatsApp - Compras
+        function shareWhatsApp() {
+            const sol = solicitacoes.find(s => s.id === currentId);
+
+            const urgenciaIcons = {normal: '🟢', urgente: '🟡', parado: '🔴'};
+
+            let msg = `*SOLICITAÇÃO DE COMPRAS - PCM*\n\n`;
+            msg += `${urgenciaIcons[sol.urgencia]} *Urgência:* ${sol.urgencia.toUpperCase()}\n\n`;
+            msg += `*Solicitante:* ${sol.solicitante}\n`;
+            msg += `*Data:* ${formatDate(sol.data)}\n`;
+            msg += `*Frota:* ${sol.frota}\n`;
+            msg += `*CR:* ${sol.cr}\n`;
+            msg += `*Local:* ${sol.local}\n\n`;
+
+            if (sol.servicos.length > 0) {
+                msg += `*🔧 SERVIÇOS:*\n`;
+                sol.servicos.forEach((s, i) => {
+                    msg += `${i+1}. ${s.nome}\n`;
+                    if (s.descricao) msg += `   ${s.descricao}\n`;
+                });
+                msg += `\n`;
+            }
+
+            if (sol.pecas.length > 0) {
+                msg += `*🔩 PEÇAS:*\n`;
+                sol.pecas.forEach((p, i) => {
+                    msg += `${i+1}. ${p.nome} (Qtd: ${p.quantidade})\n`;
+                    if (p.observacoes) msg += `   ${p.observacoes}\n`;
+                });
+                msg += `\n`;
+            }
+
+            msg += `_Para mais informações, estarei enviando o orçamento e a foto das peças caso haja dúvidas._`;
+
+            const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+        }
+
+        // FERRAMENTAS
+        function openToolModal() {
+            openModal('modal-tool');
+        }
+
+        function previewToolPhoto(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('tool-photo-preview');
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function salvarFerramenta(e) {
+            e.preventDefault();
+
+            const photo = document.getElementById('tool-photo-preview').src || null;
+
+            const nova = {
+                id: Date.now(),
+                solicitante: document.getElementById('tool-solicitante').value,
+                nome: document.getElementById('tool-name').value,
+                descricao: document.getElementById('tool-desc').value,
+                foto: photo,
+                data: new Date().toISOString().split('T')[0]
+            };
+
+            ferramentas.unshift(nova);
+            localStorage.setItem('ferramentas', JSON.stringify(ferramentas));
+
+            closeModal('modal-tool');
+            renderTools();
+        }
+
+        function renderTools() {
+            const container = document.getElementById('tools-container');
+
+            if (ferramentas.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        <p>Nenhuma ferramenta solicitada</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = ferramentas.map(tool => `
+                <div class="card normal">
+                    <div class="card-header">
+                        <div class="card-title">${tool.nome}</div>
+                        <button style="background:none; border:none; color:#EF4444; font-size:20px; cursor:pointer;" onclick="deleteTool(${tool.id})">×</button>
+                    </div>
+                    <div class="card-info">
+                        <div><strong>Solicitante:</strong> ${tool.solicitante}</div>
+                        <div><strong>Data:</strong> ${formatDate(tool.data)}</div>
+                        ${tool.descricao ? `<div style="margin-top:5px;">${tool.descricao}</div>` : ''}
+                    </div>
+                    ${tool.foto ? `<img src="${tool.foto}" class="item-photo" onclick="window.open('${tool.foto}')">` : ''}
+                    <button class="btn-primary" style="margin-top:10px; background:#25D366;" onclick="shareToolWhatsApp(${tool.id})">📲 Compartilhar</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteTool(id) {
+            if (!confirm('Excluir esta solicitação?')) return;
+            ferramentas = ferramentas.filter(t => t.id !== id);
+            localStorage.setItem('ferramentas', JSON.stringify(ferramentas));
+            renderTools();
+        }
+
+        function shareToolWhatsApp(id) {
+            const tool = ferramentas.find(t => t.id === id);
+
+            let msg = `*🔧 SOLICITAÇÃO DE FERRAMENTA - PCM*\n\n`;
+            msg += `*Ferramenta:* ${tool.nome}\n`;
+            msg += `*Solicitante:* ${tool.solicitante}\n`;
+            msg += `*Data:* ${formatDate(tool.data)}\n`;
+            if (tool.descricao) {
+                msg += `*Descrição:* ${tool.descricao}\n`;
+            }
+            msg += `\n_${tool.foto ? 'Foto anexada em seguida.' : 'Sem foto anexada.'}_`;
+
+            const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+        }
+
+        function formatDate(dateStr) {
+            const [ano, mes, dia] = dateStr.split('-');
+            return `${dia}/${mes}/${ano}`;
+        }
+
+        init();
+    </script>
+</body>
+</html>
+const CACHE_NAME = 'pcm-v1';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/manifest.json'
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
+  );
+});
+
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => response || fetch(event.request))
+  );
+});
+
+{
+  "name": "PCM Solicitações",
+  "short_name": "PCM",
+  "description": "Sistema de Solicitação de Compras e Ferramentas",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
